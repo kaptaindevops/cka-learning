@@ -88,6 +88,10 @@ So essentially:
 Replication Controller (Parent)  
 → Pod Template (Child)
 
+You can find the ReplicaSet definition file here:
+
+[replicaset-definition.yaml](./replicaset-definition.yaml)
+
 ---
 
 ## Creating a Replication Controller
