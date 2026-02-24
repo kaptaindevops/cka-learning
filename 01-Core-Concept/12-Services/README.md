@@ -139,6 +139,7 @@ A Service definition file contains:
 Example file:
 
 [service-definition.yaml](./service-definition.yaml)
+
 ---
 
 # Important Fields in Service Spec
