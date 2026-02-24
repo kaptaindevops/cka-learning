@@ -136,23 +136,9 @@ A Service definition file contains:
 - metadata
 - spec
 
-Example structure:
+Example file:
 
-```
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-service
-spec:
-  type: NodePort
-  selector:
-    app: myapp
-  ports:
-    - port: 80
-      targetPort: 80
-      nodePort: 30008
-```
-
+[service-definition.yaml](./service-definition.yaml)
 ---
 
 # Important Fields in Service Spec
