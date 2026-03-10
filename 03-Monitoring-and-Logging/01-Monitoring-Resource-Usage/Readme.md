@@ -1,112 +1,118 @@
 # Monitoring Resource Usage in Kubernetes
 
-Monitoring is an important part of managing a Kubernetes cluster. It helps administrators understand how cluster resources are being used and whether the system is performing as expected.
+Monitoring is an essential part of managing a Kubernetes cluster. It helps administrators understand how resources are being used and whether the cluster is operating efficiently. When monitoring Kubernetes, we typically want visibility into both **node-level metrics** and **pod-level metrics**.
 
-When monitoring Kubernetes, we typically focus on two main levels:
+## Metric Types
 
-1. **Node-level metrics**
-2. **Pod-level metrics**
+### Node-Level Metrics
 
----
+At the node level, common metrics to monitor include:
 
-# Node-Level Metrics
+* Total number of nodes in the cluster
+* Health status of each node
+* CPU and Memory usage
+* Network and Disk utilization
 
-Node-level monitoring provides information about the overall health and performance of the cluster nodes.
+### Pod-Level Metrics
 
-Some common metrics include:
+At the application level, we monitor Pods to track:
 
-- Number of nodes in the cluster
-- Node health status
-- CPU utilization
-- Memory usage
-- Network usage
-- Disk usage
-
-These metrics help determine whether nodes have enough resources to run workloads efficiently.
+* Total number of Pods running
+* CPU consumption per Pod
+* Memory consumption per Pod
 
 ---
 
-# Pod-Level Metrics
+## Monitoring Solutions
 
-Pod-level monitoring focuses on the applications running inside the cluster.
+Kubernetes does not include a complete built-in long-term monitoring platform. Instead, it relies on external tools to collect, store, and analyze metrics.
 
-Important metrics include:
+| Solution | Use Case |
+| --- | --- |
+| **Metrics Server** | Real-time resource usage & Autoscaling (HPA) |
+| **Prometheus** | Industry standard for time-series data & alerting |
+| **Elastic Stack** | Log aggregation and analysis |
+| **Datadog / Dynatrace** | Managed SaaS APM and infrastructure monitoring |
 
-- Total number of Pods running
-- CPU usage of each Pod
-- Memory usage of each Pod
-
-This information helps identify resource-heavy workloads and troubleshoot performance issues.
-
----
-
-# Monitoring Solutions in Kubernetes
-
-Kubernetes does not include a complete built-in monitoring system by default. Instead, it supports several external monitoring tools.
-
-Some commonly used monitoring solutions include:
-
-### Metrics Server
-A lightweight monitoring solution used for basic resource metrics.
-
-### Prometheus
-A powerful open-source monitoring and alerting system commonly used with Kubernetes.
-
-### Elastic Stack
-Used for log aggregation and monitoring.
-
-### Commercial Monitoring Tools
-Some organizations use proprietary monitoring platforms such as:
-
-- Datadog
-- Dynatrace
-
-Earlier Kubernetes setups used a monitoring tool called **Heapster**, but it has been deprecated and replaced by **Metrics Server**.
+> **Note:** Earlier Kubernetes environments used **Heapster**, but this project has been deprecated and replaced by the **Metrics Server**.
 
 ---
 
-# Metrics Server
+## The Metrics Server
 
-The **Metrics Server** is a lightweight monitoring component designed specifically for Kubernetes.
+The **Metrics Server** is the primary "source of truth" for resource metrics within a cluster.
 
-Key characteristics:
+### Key Characteristics:
 
-- Only **one Metrics Server runs per cluster**
-- Collects metrics from nodes and Pods
-- Aggregates metrics and stores them **in memory**
-- Does **not store historical data**
+* **One per cluster:** Only one instance runs per cluster.
+* **In-Memory Storage:** It does **not** maintain historical data.
+* **Purpose:** Designed for real-time monitoring and enabling the **Horizontal Pod Autoscaler (HPA)**.
 
-Because it stores metrics only in memory, it is mainly used for **real-time monitoring**, not long-term analytics.
+### How Metrics Are Collected
 
-For historical monitoring and advanced analysis, tools like **Prometheus** are typically used.
+The Metrics Server aggregates data from every node via the **Kubelet**. Inside every Kubelet is a component called **cAdvisor** (Container Advisor), which is responsible for reaching into the container runtime to pull stats.
 
----
-
-# How Metrics Are Collected
-
-Metrics are collected from each node using the **Kubelet**.
-
-The Kubelet is responsible for:
-
-- Managing Pods on a node
-- Communicating with the API Server
-- Reporting node information
-
-Inside the Kubelet is a component called **cAdvisor (Container Advisor)**.
-
-cAdvisor performs the following tasks:
-
-- Collects resource usage statistics from containers
-- Tracks CPU, memory, and network usage
-- Exposes these metrics through the Kubelet API
-
-The **Metrics Server** retrieves this data from the Kubelet and aggregates it for cluster monitoring.
+1. **cAdvisor:** Collects CPU, memory, network, and disk stats from containers.
+2. **Kubelet:** Exposes these statistics through its API.
+3. **Metrics Server:** Polls the Kubelet API on each node to aggregate the data.
 
 ---
 
-# Installing Metrics Server
+## Installation and Usage
 
-If you are using **Minikube**, you can enable the Metrics Server using:
+### Installing Metrics Server
+
+**On Minikube:**
 
 ```bash
 minikube addons enable metrics-server
+
+```
+
+**On standard Kubernetes clusters:**
+
+```bash
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+```
+
+### Viewing Resource Metrics
+
+Once installed, you can use the `kubectl top` command to view resource consumption in real-time.
+
+#### 1. Node Metrics
+
+```bash
+kubectl top node
+
+```
+
+**Example Output:**
+
+```text
+NAME         CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%
+node-1       166m         8%     1024Mi          25%
+node-2       120m         6%     980Mi           22%
+
+```
+
+#### 2. Pod Metrics
+
+```bash
+kubectl top pod
+
+```
+
+**Example Output:**
+
+```text
+NAME         CPU(cores)   MEMORY(bytes)
+nginx-pod    5m           20Mi
+api-server   25m          120Mi
+
+```
+
+---
+
+## Summary
+Monitoring is critical for cluster health. While **Metrics Server** provides the real-time data necessary for commands like `kubectl top` and for the **Horizontal Pod Autoscaler**, it lacks historical depth. For long-term trends and advanced dashboarding, administrators typically pair the Metrics Server with a tool like **Prometheus**.
